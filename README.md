@@ -18,10 +18,6 @@
 
 ---
 
-## **Demo**
-
-- Live demo via **GitHub Pages** (if enabled):  
-`https://YourUsername.github.io/careerfit-resume-analyzer/`
 
 ---
 
@@ -29,13 +25,13 @@
 
 - **Frontend:** HTML, CSS, JavaScript  
 - **Libraries:** jsPDF (for PDF generation)  
-- **Future Backend (Optional):** Python + Flask (for parsing `.docx`/`.pdf` resumes)
+
 
 ---
 
 ## **Usage**
 
-1. Open `index.html` in a browser (or via GitHub Pages).  
+1. Open `careerfit.html` in a browser (or via GitHub Pages).  
 2. Paste resume text in the input area.  
 3. Select the desired job role.  
 4. Click **Analyze Resume**.  
