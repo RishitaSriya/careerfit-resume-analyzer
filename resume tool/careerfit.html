@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CareerFit — Resume Analyzer & Suggestions</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --bg1:#0f1724; --bg2:#1e293b; --accent1:#7c5cff; --accent2:#4fc3f7;
+  --card:#ffffff; --muted:#667085;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; font-family:'Poppins',sans-serif;
+  background: radial-gradient(circle at 10% 10%, rgba(124,92,255,0.12), transparent 10%),
+              linear-gradient(135deg,var(--bg1),var(--bg2));
+  display:flex; align-items:center; justify-content:center; padding:30px; color:#0b1221;
+}
+.container{
+  width:1000px; max-width:98vw;
+  display:grid; grid-template-columns:420px 1fr; gap:22px; align-items:start;
+}
+.card{
+  background:var(--card); border-radius:14px; padding:18px;
+  box-shadow:0 10px 30px rgba(2,6,23,0.35);
+}
+.left .title{
+  font-size:22px; font-weight:700; color:var(--bg1); margin-bottom:6px;
+}
+.subtitle{color:var(--muted); font-size:13px; margin-bottom:12px}
+label{display:block; font-weight:600; margin-top:12px; font-size:13px; color:#1f2937}
+select,input[type=file],textarea,button{
+  width:100%; padding:10px 12px; margin-top:8px; border-radius:8px; border:1px solid #e6e9ef;
+  font-size:14px; font-family:inherit;
+}
+textarea{min-height:120px; resize:vertical}
+.btn{
+  background:linear-gradient(90deg,var(--accent1),var(--accent2)); color:white; border:none;
+  padding:12px; border-radius:10px; font-weight:700; cursor:pointer; margin-top:12px;
+  transition:transform .18s ease, box-shadow .18s;
+}
+.btn:hover{ transform:translateY(-3px); box-shadow:0 10px 30px rgba(76,195,247,0.16); }
+.right { display:flex; flex-direction:column; gap:16px }
+.stat-row{display:flex; gap:12px; align-items:center;}
+.stat{flex:1; background:linear-gradient(180deg,#fbfdff,#f7f9ff); padding:12px; border-radius:10px; border:1px solid #eef2ff}
+.stat h3{margin:0; font-size:12px; color:var(--muted)}
+.stat p{margin:8px 0 0; font-size:18px; font-weight:700; color:#0b1221}
+.progress-wrap{margin-top:12px}
+.progress-bar{height:18px; background:#eef2ff; border-radius:12px; overflow:hidden; border:1px solid #e6eeff}
+.progress-inner{height:100%; width:0%; background:linear-gradient(90deg,var(--accent1),var(--accent2)); transition:width 1.1s ease}
+.result-area{background:linear-gradient(180deg,#ffffff,#fbfcff); padding:14px; border-radius:10px; border:1px solid #eef2ff;}
+.tags{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px}
+.tag{background:#f1f6ff; padding:6px 10px; border-radius:999px; font-weight:600; color:#123; font-size:13px}
+.preview{margin-top:12px;padding:12px;border-radius:8px;background:#0b1221;color:#e6eef8;min-height:120px;white-space:pre-wrap;overflow:auto;border:1px solid rgba(255,255,255,0.04)}
+.modal-back{position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(2,6,23,0.5); z-index:50}
+.modal{background:white;padding:18px;border-radius:12px; width:440px; box-shadow:0 20px 60px rgba(2,6,23,0.6)}
+.loader{display:flex;align-items:center;gap:10px;margin-top:12px}
+.spinner{width:36px;height:36px;border-radius:50%;border:4px solid #eef2ff;border-top-color:var(--accent1);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.confetti { position:fixed; left:0; top:0; width:100%; height:0; pointer-events:none; z-index:120; overflow:visible }
+.confetti-piece { position:absolute; width:10px; height:16px; opacity:0; transform-origin:left top; animation:fall 1400ms linear forwards; }
+@keyframes fall { 0% { transform:translateY(-10vh) rotate(0deg); opacity:1; } 100% { transform:translateY(110vh) rotate(720deg); opacity:0; } }
+.muted{color:var(--muted); font-size:13px}
+.small{font-size:13px}
+.flex{display:flex; gap:8px; align-items:center}
+.chip{background:#f5f7ff;padding:6px 10px;border-radius:999px;font-weight:600;color:#102041}
+@media (max-width:900px){ .container{grid-template-columns:1fr; padding:12px} }
+</style>
+</head>
+<body>
+<div class="container">
+<div class="card left">
+<div class="title">CareerFit — Resume Analyzer & Suggestions</div>
+<div class="subtitle">Upload PDF or paste your resume. Analyze to get role-fit score, missing skills, strong areas, and course suggestions!</div>
+
+<label>Job Role</label>
+<select id="role">
+<option value="Software Developer">💻 Software Developer</option>
+<option value="Data Scientist">📊 Data Scientist</option>
+<option value="Data Analyst">📈 Data Analyst</option>
+<option value="DevOps Engineer">⚙️ DevOps Engineer</option>
+<option value="Full Stack Developer">🌐 Full Stack Developer</option>
+<option value="Frontend Developer">🖌️ Frontend Developer</option>
+<option value="Backend Developer">🔧 Backend Developer</option>
+<option value="AI Engineer">🤖 AI Engineer</option>
+<option value="Cybersecurity Analyst">🛡️ Cybersecurity Analyst</option>
+</select>
+
+<label>Upload Resume (PDF)</label>
+<input id="fileInput" type="file" accept=".pdf">
+<label>Or paste resume text</label>
+<textarea id="resume" placeholder="Paste resume text here"></textarea>
+
+<div style="display:flex;gap:8px">
+<button class="btn" id="analyzeBtn">Analyze Resume</button>
+<button class="btn" id="detailsBtn" style="background:linear-gradient(90deg,#e2e8ff,#fef9c3); color:#102041;">More Tips</button>
+</div>
+
+<div id="loaderWrap" class="loader" style="display:none">
+<div class="spinner"></div>
+<div><div style="font-weight:700">Analyzing resume…</div><div class="muted small">Processing keywords, sections, and suggestions...</div></div>
+</div>
+</div>
+
+<div class="right">
+<div class="card">
+<div class="stat-row">
+<div class="stat"><h3>Role Fit</h3><p id="fitLabel">—</p></div>
+<div class="stat"><h3>Score</h3><p id="scoreNum">—</p></div>
+<div class="stat"><h3>Strong Areas</h3><p id="strongArea">—</p></div>
+</div>
+
+<div class="progress-wrap"><div class="progress-bar"><div class="progress-inner" id="progressInner"></div></div></div>
+
+<div class="result-area">
+<div style="display:flex;justify-content:space-between;align-items:center"><div class="muted small">Missing Skills</div><div class="muted small">Completeness</div></div>
+<div style="display:flex;gap:12px; margin-top:8px">
+<div style="flex:1" id="missingList">—</div>
+<div style="width:140px; text-align:right">
+<div id="completeness">—</div>
+<div class="tags" id="sectionTags" style="justify-content:flex-end"></div>
+</div>
+</div>
+
+<div style="margin-top:12px">
+<div class="muted small">Preview (highlighted keywords)</div>
+<div class="preview" id="preview">Paste or upload resume text here.</div>
+</div>
+</div>
+<div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<div><strong>Improvement & Course Suggestions</strong></div>
+<div><button id="copyReport" class="btn" style="background:#0b1221;color:white;padding:8px 12px;font-weight:600">Copy</button></div>
+</div>
+<div id="suggestions" style="margin-top:12px">—</div>
+<button id="pdfReport" class="btn" style="background:#ff7f50;color:white;margin-top:12px">Generate PDF Report</button>
+</div>
+</div>
+</div>
+
+<div id="modal" class="modal-back">
+<div class="modal">
+<h3>How CareerFit Works</h3>
+<div class="list">
+<p>1. Detect role-specific keywords in resume text.</p>
+<p>2. Check important sections: Skills, Projects, Education, Certifications, Internships.</p>
+<p>3. Generate role-fit score, improvement suggestions, and course recommendations.</p>
+<p>Tip: Add concrete projects and skills to improve your score quickly!</p>
+</div>
+<div style="text-align:right; margin-top:12px">
+<button class="btn" onclick="closeModal()" style="background:linear-gradient(90deg,#efefef,#e9f6ff); color:#0b1221">Close</button>
+</div>
+</div>
+</div>
+
+<div id="confetti" class="confetti"></div>
+
+<script>
+/* Keywords & Courses DB */
+const keywordsDB = {
+  "Software Developer":["python","java","git","sql","html","css","javascript","c","c++"],
+  "Data Scientist":["python","machine learning","pandas","statistics","numpy","scikit-learn","deep learning","tensorflow"],
+  "Data Analyst":["excel","sql","python","power bi","tableau","statistics","visualization","pandas"],
+  "DevOps Engineer":["docker","kubernetes","aws","linux","ci/cd","terraform","ansible","monitoring"],
+  "Full Stack Developer":["html","css","javascript","react","node","express","mongodb","sql"],
+  "Frontend Developer":["html","css","javascript","react","ui","ux"],
+  "Backend Developer":["python","java","sql","api","database","flask","django","node"],
+  "AI Engineer":["python","tensorflow","pytorch","machine learning","deep learning","numpy"],
+  "Cybersecurity Analyst":["network","linux","security","penetration","firewall","monitoring"]
+};
+const courseDB = {
+  "python":"Python.org Tutorial | FreeCodeCamp Python Course",
+  "java":"Java Programming Masterclass | Codecademy Java Course",
+  "html":"FreeCodeCamp HTML Course",
+  "css":"FreeCodeCamp CSS Course",
+  "javascript":"JavaScript Tutorial | MDN",
+  "react":"React JS Course | Scrimba",
+  "node":"Node.js Full Course | FreeCodeCamp",
+  "sql":"SQL for Beginners | Khan Academy",
+  "git":"Git & GitHub Course | Codecademy",
+  "docker":"Docker Essentials | Pluralsight",
+  "kubernetes":"Kubernetes Basics | Udemy",
+  "aws":"AWS Fundamentals | Coursera",
+  "tensorflow":"TensorFlow Course | Coursera",
+  "pandas":"Pandas Tutorial | DataCamp",
+  "numpy":"NumPy Tutorial | DataCamp",
+  "machine learning":"Machine Learning by Andrew Ng | Coursera"
+};
+const requiredSections=["skills","projects","education","certification","certifications","internship","internships","experience"];
+function norm(txt){return(txt||"").toLowerCase().replace(/\r\n/g," ").replace(/\n/g," ").replace(/\s+/g," ").trim();}
+
+const fileInput=document.getElementById('fileInput');
+fileInput.addEventListener('change',async(e)=>{
+const file=e.target.files[0]; if(!file) return;
+if(file.type==="application/pdf"){const reader=new FileReader();
+reader.onload=function(){const typed=new Uint8Array(this.result);
+pdfjsLib.getDocument(typed).promise.then(async pdf=>{
+let text="";
+for(let i=1;i<=pdf.numPages;i++){
+const page=await pdf.getPage(i);
+const content=await page.getTextContent();
+content.items.forEach(it=>text+=it.str+" ");
+document.getElementById('resume').value=text;
+}}).catch(err=>{alert("PDF read error: "+err.message);});
+}; reader.readAsArrayBuffer(file);} else {alert("Only PDF auto-parse supported. DOC/DOCX paste text manually.");}
+});
+
+const analyzeBtn=document.getElementById('analyzeBtn');
+analyzeBtn.addEventListener('click',()=>runAnalysis());
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+async function runAnalysis(){
+document.getElementById('loaderWrap').style.display="flex";
+analyzeBtn.disabled=true; analyzeBtn.style.opacity=0.6;
+const role=document.getElementById('role').value;
+const raw=document.getElementById('resume').value; const text=norm(raw);
+const progressInner=document.getElementById('progressInner'); progressInner.style.width="10%"; await sleep(400); progressInner.style.width="30%"; await sleep(600);
+const kw=keywordsDB[role]||[]; const matched=[]; const missing=[];
+for(const k of kw){const ks=k.toLowerCase(); if(text.includes(ks)){matched.push(k);} else{missing.push(k);}}
+const presentSections=[]; for(const s of requiredSections){if(text.includes(s)) presentSections.push(s);}
+let baseScore=Math.round((matched.length/kw.length)*100);
+const completenessScore=Math.min(20,Math.round((presentSections.length/5)*20)); 
+let finalScore=Math.min(100,baseScore+completenessScore);
+await sleep(400); progressInner.style.width="60%"; await sleep(600); progressInner.style.width="85%"; await sleep(600);
+progressInner.style.width=finalScore+"%";
+document.getElementById('scoreNum').innerText=finalScore+"%";
+document.getElementById('fitLabel').innerText=roleFitLabel(finalScore);
+document.getElementById('strongArea').innerText=matched.length?matched.slice(0,4).join(", "):"None";
+document.getElementById('missingList').innerHTML=missing.length?missing.map(s=>`<div class="chip">${s} (${courseDB[s.toLowerCase()]||'Course Suggestion'})</div>`).join(' '):'<span class="muted small">No missing core skills</span>';
+const completenessPct=Math.round((presentSections.length/5)*100);
+document.getElementById('completeness').innerHTML=completenessPct+"%";
+const tags=document.getElementById('sectionTags'); tags.innerHTML=""; presentSections.forEach(s=>{const t=document.createElement('div'); t.className='tag'; t.textContent=capitalize(s); tags.appendChild(t);});
+highlightPreview(raw,kw);
+const suggestions=generateSuggestions(matched,missing,presentSections,role);
+document.getElementById('suggestions').innerHTML=suggestionsToHtml(suggestions);
+document.getElementById('copyReport').onclick=()=>{navigator.clipboard.writeText(suggestionsText(suggestions)); alert("Report copied!")};
+document.getElementById('loaderWrap').style.display="none"; analyzeBtn.disabled=false; analyzeBtn.style.opacity=1;
+if(finalScore>=85){runConfetti();}
+}
+
+function roleFitLabel(score){if(score>=85)return"Excellent Fit"; if(score>=65)return"Good Fit"; if(score>=45)return"Moderate Fit"; return"Needs Improvement";}
+function highlightPreview(rawText,keywordList){const preview=document.getElementById('preview'); if(!rawText||rawText.trim()===""){preview.innerText="No resume text to preview."; return;} let html=escapeHtml(rawText); const sorted=[...keywordList].sort((a,b)=>b.length-a.length); sorted.forEach(k=>{const esc=escapeRegExp(k); const re=new RegExp(esc,'gi'); html=html.replace(re,(match)=>`<span class="hl">${match}</span>`);}); preview.innerHTML=html;}
+function generateSuggestions(matched,missing,presentSections,role){const list=[]; if(matched.length){list.push({title:"Strengths",text:`You have core keywords: ${matched.slice(0,6).join(", ")}.`});}else{list.push({title:"Strengths",text:`No core keywords found for ${role}. Add exact technology names in Skills section.`});}
+if(missing.length){list.push({title:"Missing Skills",text:`Consider adding: ${missing.join(", ")}. Recommended courses included.`});}
+if(presentSections.length<5){list.push({title:"Completeness",text:`Some key sections missing: ${requiredSections.filter(s=>!presentSections.includes(s)).join(", ")}.`});}
+return list;}
+function suggestionsToHtml(suggestions){return suggestions.map(s=>`<strong>${s.title}:</strong> ${s.text}`).join("<br><br>");}
+function suggestionsText(suggestions){return suggestions.map(s=>`${s.title}: ${s.text}`).join("\n");}
+function capitalize(txt){return txt.charAt(0).toUpperCase()+txt.slice(1);}
+function escapeHtml(text){var map={ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'};return text.replace(/[&<>"']/g,(m)=>map[m]);}
+function escapeRegExp(text){return text.replace(/[-[\]/{}()*+?.\\^$|]/g,"\\$&");}
+function runConfetti(){const confettiWrap=document.getElementById('confetti'); for(let i=0;i<80;i++){const c=document.createElement('div');c.className='confetti-piece';c.style.left=Math.random()*100+'%';c.style.background=`hsl(${Math.random()*360},70%,60%)`;c.style.animationDelay=Math.random()*1.2+'s';confettiWrap.appendChild(c);}}
+document.getElementById('detailsBtn').onclick=()=>document.getElementById('modal').style.display="flex";
+function closeModal(){document.getElementById('modal').style.display="none";}
+
+/* PDF Report */
+document.getElementById('pdfReport').addEventListener('click', ()=>{
+const { jsPDF } = window.jspdf;
+const doc = new jsPDF();
+const role=document.getElementById('role').value;
+const score=document.getElementById('scoreNum').innerText;
+const fit=document.getElementById('fitLabel').innerText;
+const strong=document.getElementById('strongArea').innerText;
+const missingElems=Array.from(document.getElementById('missingList').children).map(e=>e.innerText).filter(t=>t);
+const missing=missingElems.length?missingElems.join(", "):"None";
+const suggestions=document.getElementById('suggestions').innerText;
+doc.setFont("Poppins","bold"); doc.setFontSize(20); doc.text("CareerFit Resume Report",14,20);
+doc.setFontSize(12); doc.setFont("Poppins","normal");
+doc.text(`Role: ${role}`,14,35); doc.text(`Fit Level: ${fit}`,14,45);
+doc.text(`Score: ${score}`,14,55); doc.text(`Strong Areas: ${strong}`,14,65);
+doc.text(`Missing Skills: ${missing}`,14,75);
+doc.text("Suggestions:",14,90); doc.text(doc.splitTextToSize(suggestions,180),14,100);
+doc.save("CareerFit_Report.pdf");
+alert("PDF report generated!");
+});
+</script>
+</body>
+</html>
